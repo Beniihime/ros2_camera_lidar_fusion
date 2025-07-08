@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 import yaml
 import struct
+import math
 
 from sensor_msgs.msg import Image, PointCloud2
 from cv_bridge import CvBridge
@@ -111,7 +112,7 @@ class LidarCameraProjectionNode(Node):
         self.ts = ApproximateTimeSynchronizer(
             [self.image_sub, self.lidar_sub],
             queue_size=5,
-            slop=0.07
+            slop=1.07
         )
         self.ts.registerCallback(self.sync_callback)
 
@@ -152,6 +153,8 @@ class LidarCameraProjectionNode(Node):
         
         rvec = np.zeros((3,1), dtype=np.float64)
         tvec = np.zeros((3,1), dtype=np.float64)
+        mat_data = self.camera_matrix
+        self.camera_matrix = np.array(mat_data, dtype=np.float64).reshape((3, 3))
         image_points, _ = cv2.projectPoints(
             xyz_cam_front,
             rvec, tvec,
@@ -159,13 +162,32 @@ class LidarCameraProjectionNode(Node):
             self.dist_coeffs
         )
         image_points = image_points.reshape(-1, 2)
+        # print(xyz_cam_front[:-10])
 
         h, w = cv_image.shape[:2]
-        for (u, v) in image_points:
+        # i = 0
+
+        origin = np.array([0.0, 0.0, 0.0])
+
+        distances = np.linalg.norm(xyz_cam_front - origin, axis=1)
+        dist_min = np.min(distances)
+        dist_max = np.max(distances)
+        
+        for i, (u, v) in enumerate(image_points):
             u_int = int(u + 0.5)
             v_int = int(v + 0.5)
+
+            dist = distances[i]
+            if dist_max > dist_min:
+                dist_norm = (dist - dist_min) / (dist_max - dist_min)
+            else:
+                dist_norm = 0.5
+            
+            color = (int(255 * (1 - dist_norm)), 0, int(255 * dist_norm))
+            
             if 0 <= u_int < w and 0 <= v_int < h:
-                cv2.circle(cv_image, (u_int, v_int), 2, (0, 255, 0), -1)
+                # cv2.circle(cv_image, (u_int, v_int), 3, (int(math.sqrt(pow(xyz_cam_front[i][0], 2)+pow(xyz_cam_front[i][1], 2)+pow(xyz_cam_front[i][2], 2))*15), 0, 0), -1)
+                cv2.circle(cv_image, (u_int, v_int), 3, color, -1)
 
         out_msg = self.bridge.cv2_to_imgmsg(cv_image, encoding='bgr8')
         out_msg.header = image_msg.header

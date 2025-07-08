@@ -19,9 +19,9 @@ class CameraLidarExtrinsicNode(Node):
             return
         
         self.corr_file = config_file['general']['correspondence_file']
-        self.corr_file = f'/ros2_ws/src/ros2_camera_lidar_fusion/data/{self.corr_file}'
+        self.corr_file = f'/home/benihime/ros2_ws/src/ros2_camera_lidar_fusion/data/{self.corr_file}'
         self.camera_yaml = config_file['general']['camera_intrinsic_calibration']
-        self.camera_yaml = f'/ros2_ws/src/ros2_camera_lidar_fusion/config/{self.camera_yaml}'
+        self.camera_yaml = f'/home/benihime/ros2_ws/src/ros2_camera_lidar_fusion/config/{self.camera_yaml}'
         self.output_dir = config_file['general']['config_folder']
         self.file = config_file['general']['camera_extrinsic_calibration']
 
@@ -37,10 +37,10 @@ class CameraLidarExtrinsicNode(Node):
             config = yaml.safe_load(f)
 
         mat_data = config['camera_matrix']['data']
-        camera_matrix = np.array(mat_data, dtype=np.float64)
+        camera_matrix = np.array(mat_data, dtype=np.float64).reshape((3, 3))
         dist_data = config['distortion_coefficients']['data']
         dist_coeffs = np.array(dist_data, dtype=np.float64).reshape((1, -1))
-
+        
         return camera_matrix, dist_coeffs
 
     def solve_extrinsic_with_pnp(self):

@@ -98,7 +98,7 @@ class ImageCloudCorrespondenceNode(Node):
         vis.add_geometry(pcd)
 
         render_opt = vis.get_render_option()
-        render_opt.point_size = 2.0
+        render_opt.point_size = 3.0
 
         vis.run()
         vis.destroy_window()
