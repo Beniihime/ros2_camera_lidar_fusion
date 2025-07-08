@@ -1,8 +1,5 @@
 # Ignore files
-camera_extrinsic_calibration.yaml
-camera_intrinsic_calibration.yaml
 
 # Ignore folders
 .vscode
 log
-/data
